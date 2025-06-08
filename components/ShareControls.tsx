@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Pause, Play, Phone, Share2 } from 'lucide-react-native';
+import * as Sharing from 'expo-sharing';
 
 interface ShareControlsProps {
   isHost: boolean;
@@ -11,16 +12,16 @@ interface ShareControlsProps {
   stopCapture: () => void;
 }
 
-export function ShareControls({ 
-  isHost, 
+export function ShareControls({
+  isHost,
   isConnected,
   onLeave,
   captureStatus,
   startCapture,
-  stopCapture
+  stopCapture,
 }: ShareControlsProps) {
   const isCapturing = captureStatus === 'capturing';
-  
+
   const handleToggleCapture = () => {
     if (isCapturing) {
       stopCapture();
@@ -30,18 +31,39 @@ export function ShareControls({
   };
 
   const handleInvite = () => {
-    // TODO: Implement invite functionality (e.g., share room link or code)
+    // Share the room code or link
+    const message = 'Join my screen sharing session!';
+    // If you have access to the roomId, you can include it here
+    // For now, just share a generic message
+    if (typeof window !== 'undefined' && navigator.share) {
+      navigator.share({
+        title: 'Screen Share Invite',
+        text: message,
+        // url: 'https://your-app-link.com/room/' + roomId, // Uncomment if you have a room link
+      });
+    } else if (Sharing.isAvailableAsync) {
+      Sharing.isAvailableAsync().then((available) => {
+        if (available) {
+          Sharing.shareAsync(undefined, {
+            dialogTitle: 'Screen Share Invite',
+            mimeType: 'text/plain',
+            UTI: 'public.text',
+            message,
+          });
+        }
+      });
+    }
   };
 
   return (
     <View style={styles.container}>
       {isHost && isConnected && (
         <View style={styles.hostControls}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.controlButton, 
+              styles.controlButton,
               styles.captureToggleButton,
-              isCapturing ? styles.pauseButton : styles.startButton
+              isCapturing ? styles.pauseButton : styles.startButton,
             ]}
             onPress={handleToggleCapture}
           >
@@ -57,16 +79,18 @@ export function ShareControls({
               </>
             )}
           </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.controlButton, styles.shareButton]} onPress={handleInvite}>
-          <TouchableOpacity style={[styles.controlButton, styles.shareButton]}>
+
+          <TouchableOpacity
+            style={[styles.controlButton, styles.shareButton]}
+            onPress={handleInvite}
+          >
             <Share2 color="#FFFFFF" size={20} />
             <Text style={styles.buttonText}>Invite</Text>
           </TouchableOpacity>
         </View>
       )}
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={[styles.controlButton, styles.endButton]}
         onPress={onLeave}
       >

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Copy, CheckCircle, AlertCircle, WifiOff } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 
 interface ConnectionStatusProps {
   status: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'failed';
@@ -18,8 +19,14 @@ export function ConnectionStatus({
   isHost,
 }: ConnectionStatusProps) {
   const handleCopyRoomId = () => {
-    // TODO: Implement clipboard copy for room ID (use Clipboard API for web and expo-clipboard for native)
-    if (Platform.OS !== 'web') {
+    if (Platform.OS === 'web') {
+      if (navigator && navigator.clipboard) {
+        navigator.clipboard.writeText(roomId).then(() => {
+          // Optionally show a notification or toast
+        });
+      }
+    } else {
+      Clipboard.setStringAsync(roomId);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   };
