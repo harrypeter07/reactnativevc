@@ -2,19 +2,24 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const twilio = require('twilio');
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.EXPO_PUBLIC_CLIENT_URL || "*",
-    methods: ["GET", "POST"]
-  }
+    origin: process.env.EXPO_PUBLIC_CLIENT_URL || '*',
+    methods: ['GET', 'POST'],
+  },
 });
 
 app.use(cors());
 
 const rooms = new Map();
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
@@ -62,6 +67,16 @@ io.on('connection', (socket) => {
       }
     });
   });
+});
+
+// Endpoint to get ICE servers from Twilio
+app.get('/ice-servers', async (req, res) => {
+  try {
+    const token = await client.tokens.create();
+    res.json(token.iceServers);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch ICE servers' });
+  }
 });
 
 const PORT = process.env.PORT || 3001;
